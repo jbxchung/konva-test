@@ -14,6 +14,8 @@ const GRID_SIZE_X = 20;
 const GRID_SIZE_Y = 20;
 // each grid cell is a 30px square
 const CELL_SIZE_PX = 30;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 8;
 
 const KonvaWrapper: FC = () => {
   // need a ref to containing div for dynamic canvas resize
@@ -36,20 +38,23 @@ const KonvaWrapper: FC = () => {
 
     if (stage && pointer) {
       // evt.deltaY - negative means zoom in, positive means zoom out
-      const newZoom = e.evt.deltaY < 0 ? zoom * zoomScaleFactor : zoom / zoomScaleFactor;
-      setZoom(newZoom);
+      let newZoom = e.evt.deltaY < 0 ? zoom * zoomScaleFactor : zoom / zoomScaleFactor;
+      if (newZoom >= MIN_ZOOM && newZoom <= MAX_ZOOM) {
+        console.log(newZoom);
+        setZoom(newZoom);
 
-      // pointer
-      const scaledPointerOffset = {
-        x: (pointer.x - stage.x()) / zoom,
-        y: (pointer.y - stage.y()) / zoom,
-      };
-      var newPointerPosition = {
-        x: pointer.x - scaledPointerOffset.x * newZoom,
-        y: pointer.y - scaledPointerOffset.y * newZoom,
-      };
-      setPointerPosition(newPointerPosition);
-      stage.position(newPointerPosition);
+        // center zoom on pointer
+        const scaledPointerOffset = {
+          x: (pointer.x - stage.x()) / zoom,
+          y: (pointer.y - stage.y()) / zoom,
+        };
+        var newPointerPosition = {
+          x: pointer.x - scaledPointerOffset.x * newZoom,
+          y: pointer.y - scaledPointerOffset.y * newZoom,
+        };
+        setPointerPosition(newPointerPosition);
+        stage.position(newPointerPosition);
+      }
     }
   }, [zoom, setZoom]);
 
@@ -76,6 +81,11 @@ const KonvaWrapper: FC = () => {
     return () => window.removeEventListener("resize", handleWrapperResize);
   }, []);
 
+  // TODO - implement drag limits
+  const handleCanvasDrag = (e: KonvaEventObject<DragEvent>) => {
+    console.log(e, e.evt.x, e.evt.y);
+  }
+
   return (
     <div ref={wrapperDivRef} className="konva-wrapper">
       <Stage
@@ -83,6 +93,7 @@ const KonvaWrapper: FC = () => {
         width={canvasDimensions.width}
         height={canvasDimensions.height}
         draggable
+        onDragMove={handleCanvasDrag}
         scale={{ x: zoom, y: zoom }}
         onWheel={handleCanvasZoom}
       >
