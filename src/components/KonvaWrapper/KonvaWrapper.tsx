@@ -1,15 +1,64 @@
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useCallback, useEffect, useRef, useState } from "react";
 import { Stage } from "react-konva";
+import { KonvaEventObject } from "konva/lib/Node";
+import { Stage as StageInstance } from "konva/lib/Stage";
+import { Vector2d } from "konva/lib/types";
+
+import GridLayer from "../GridLayer/GridLayer";
 
 import "./KonvaWrapper.scss";
 
-const KonvaWrapper: FC = () => {
-  const wrapperDivRef = useRef<HTMLDivElement>(null);
+// TODO - these should be configurable, but for this poc we'll leave them here for now
+// 20x20 grid
+const GRID_SIZE_X = 20;
+const GRID_SIZE_Y = 20;
+// each grid cell is a 30px square
+const CELL_SIZE_PX = 30;
 
+const KonvaWrapper: FC = () => {
+  // need a ref to containing div for dynamic canvas resize
+  const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [canvasDimensions, setCanvasDimensions] = useState({
     width: 0,
     height: 0
-  })
+  });
+
+  // need a ref to stage for pointer-centered zoom
+  const konvaStageRef = useRef<StageInstance>(null);
+  const [pointerPosition, setPointerPosition] = useState<Vector2d>();
+
+  // handle zoom, centered on pointer
+  const [zoom, setZoom] = useState(1);
+  const zoomScaleFactor = 1.1;
+  const handleCanvasZoom = useCallback((e: KonvaEventObject<WheelEvent>) => {
+    const stage = e.target.getStage();
+    const pointer = stage?.getPointerPosition();
+
+    if (stage && pointer) {
+      // evt.deltaY - negative means zoom in, positive means zoom out
+      const newZoom = e.evt.deltaY < 0 ? zoom * zoomScaleFactor : zoom / zoomScaleFactor;
+      setZoom(newZoom);
+
+      // pointer
+      const scaledPointerOffset = {
+        x: (pointer.x - stage.x()) / zoom,
+        y: (pointer.y - stage.y()) / zoom,
+      };
+      var newPointerPosition = {
+        x: pointer.x - scaledPointerOffset.x * newZoom,
+        y: pointer.y - scaledPointerOffset.y * newZoom,
+      };
+      setPointerPosition(newPointerPosition);
+      stage.position(newPointerPosition);
+    }
+  }, [zoom, setZoom]);
+
+  // when pointer position is updated, set the stage to it
+  useEffect(() => {
+    if (konvaStageRef.current && pointerPosition) {
+      konvaStageRef.current.position(pointerPosition);
+    }
+  }, [konvaStageRef, pointerPosition]);
 
   const handleWrapperResize = () => {
     if (wrapperDivRef.current) {
@@ -20,10 +69,9 @@ const KonvaWrapper: FC = () => {
     }
   };
 
+  // on render, initialize canvas dimensions and register resize listener for updates
   useEffect(() => {
-    // initialize canvas dimensions
     handleWrapperResize();
-    // register resize event listener and clean it up on destroy
     window.addEventListener("resize", handleWrapperResize);
     return () => window.removeEventListener("resize", handleWrapperResize);
   }, []);
@@ -31,9 +79,17 @@ const KonvaWrapper: FC = () => {
   return (
     <div ref={wrapperDivRef} className="konva-wrapper">
       <Stage
+        ref={konvaStageRef}
         width={canvasDimensions.width}
         height={canvasDimensions.height}
+        draggable
+        scale={{ x: zoom, y: zoom }}
+        onWheel={handleCanvasZoom}
       >
+        <GridLayer
+          gridSize={{ x: GRID_SIZE_X, y: GRID_SIZE_Y }}
+          cellDimensionsPx={{ x: CELL_SIZE_PX, y: CELL_SIZE_PX}}
+        />
       </Stage>
     </div>
   );
