@@ -1,0 +1,21 @@
+@import './styles/variables.scss';
+
+html, body {
+    margin: 0;
+    height: 100%;
+
+    #root {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        font-family: Calibri, Helvetica, Arial, sans-serif;
+
+        .page-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: auto;
+            z-index: 1;
+        }
+    }
+}
