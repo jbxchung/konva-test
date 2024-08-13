@@ -1,5 +1,5 @@
 import { FC, useCallback, useEffect, useRef, useState } from "react";
-import { Stage } from "react-konva";
+import { Rect, Stage } from "react-konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import { Stage as StageInstance } from "konva/lib/Stage";
 import { Vector2d } from "konva/lib/types";
@@ -83,7 +83,9 @@ const KonvaWrapper: FC = () => {
 
   // TODO - implement drag limits
   const handleCanvasDrag = (e: KonvaEventObject<DragEvent>) => {
-    console.log(e, e.evt.x, e.evt.y);
+    if (e.target === konvaStageRef.current) {
+      console.log(e, e.evt.offsetX, e.evt.offsetY);
+    }
   }
 
   return (
@@ -100,7 +102,8 @@ const KonvaWrapper: FC = () => {
         <GridLayer
           gridSize={{ x: GRID_SIZE_X, y: GRID_SIZE_Y }}
           cellDimensionsPx={{ x: CELL_SIZE_PX, y: CELL_SIZE_PX}}
-        />
+        >
+        </GridLayer>
       </Stage>
     </div>
   );
