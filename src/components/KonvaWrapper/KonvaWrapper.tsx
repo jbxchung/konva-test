@@ -40,7 +40,6 @@ const KonvaWrapper: FC = () => {
       // evt.deltaY - negative means zoom in, positive means zoom out
       let newZoom = e.evt.deltaY < 0 ? zoom * zoomScaleFactor : zoom / zoomScaleFactor;
       if (newZoom >= MIN_ZOOM && newZoom <= MAX_ZOOM) {
-        console.log(newZoom);
         setZoom(newZoom);
 
         // center zoom on pointer
@@ -84,7 +83,7 @@ const KonvaWrapper: FC = () => {
   // TODO - implement drag limits
   const handleCanvasDrag = (e: KonvaEventObject<DragEvent>) => {
     if (e.target === konvaStageRef.current) {
-      console.log(e, e.evt.offsetX, e.evt.offsetY);
+      // console.log(e, e.evt.offsetX, e.evt.offsetY);
     }
   }
 
